@@ -1,15 +1,9 @@
 #include "raylib.h"
-char board[10] = {
-    '|',
-    '#',
-    '#',
-    '#',
-    '#',
-    '#',
-    '#',
-    '#',
-    '#',
-    '#',
+
+char board[3][3] = {
+    {'#', '#', '#'},
+    {'#', '#', '#'},
+    {'#', '#', '#'},
 };
 int option = 0;                                  // * option 1 -> user wishes to play vs ai, option 2 -> user wishes to play vs another player
 bool easy = false, medium = false, hard = false; // * vs ai difficulty options
@@ -33,98 +27,55 @@ void updateScore() {
     else
         oScore++;
 }
-void checkWin() {
-    // ! Check horizontally
 
-    if ((board[1] == board[2] && board[2] == board[3] && board[1] != '#') ||
-        (board[4] == board[5] && board[5] == board[6] && board[4] != '#') ||
-        (board[7] == board[8] && board[8] == board[9] && board[7] != '#') ||
-        // ! Check vertically
-        (board[1] == board[4] && board[4] == board[7] && board[1] != '#') ||
-        (board[2] == board[5] && board[5] == board[8] && board[2] != '#') ||
-        (board[3] == board[6] && board[6] == board[9] && board[3] != '#') ||
-        // ! Check diagonally
-        (board[1] == board[5] && board[5] == board[9] && board[1] != '#') ||
-        (board[3] == board[5] && board[5] == board[7] && board[3] != '#')) {
+bool checkBoardFull() {
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            if (board[row][col] == '#')
+                return false;
+        }
+    }
+    return true;
+}
+
+void checkWin() {
+    // Check horizontally
+    for (int row = 0; row < 3; row++) {
+        if (board[row][0] == board[row][1] && board[row][1] == board[row][2] && board[row][0] != '#') {
+            updateScore();
+            game_on = false;
+            return;
+        }
+    }
+    // Check vertically
+    for (int col = 0; col < 3; col++) {
+        if (board[0][col] == board[1][col] && board[1][col] == board[2][col] && board[0][col] != '#') {
+            updateScore();
+            game_on = false;
+            return;
+        }
+    }
+    // Check diagonally
+    if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[0][0] != '#') {
         updateScore();
         game_on = false;
-    } else if (board[1] != '#' &&
-               board[2] != '#' &&
-               board[3] != '#' &&
-               board[4] != '#' &&
-               board[5] != '#' &&
-               board[6] != '#' &&
-               board[7] != '#' &&
-               board[8] != '#' &&
-               board[9] != '#') {
+        return;
+    }
+    if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != '#') {
+        updateScore();
+        game_on = false;
+        return;
+    }
+    if (checkBoardFull()) {
         game_on = false;
         draw = true;
     }
 }
 void clearBoard() {
-    for (int i = 1; i < 10; i++)
-        board[i] = '#';
-}
-
-int bestMove, bestScore, score;
-
-int minimax(int depth, bool isMaximizing);
-
-void findBestMove() {
-    bestScore = -99999999;
-    for (int i = 1; i < 10; i++) {
-        if (board[i] == '#') {
-            board[i] = 'X';
-            score = minimax(0, true);
-            board[i] = '#';
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = i;
-            }
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            board[row][col] = '#';
         }
-    }
-}
-
-int minimax(int depth, bool isMaximizing) {
-    if (!game_on) {
-
-        if (draw) {
-            return 0;
-        } else if (current_player == 'O' && !draw) {
-            return 1;
-        } else if (current_player == 'X' && !draw) {
-            return -1;
-        }
-    }
-
-    if (isMaximizing) {
-        int bestScore = -99999999;
-        for (int i = 1; i < 10; i++) {
-            if (board[i] == '#') {
-                board[i] = 'X';
-                int score = minimax(depth + 1, false);
-                board[i] = '#';
-
-                if (score > bestScore) {
-                    bestScore = score;
-                }
-            }
-        }
-        return bestScore;
-    } else {
-        int bestScore = 9999999;
-        for (int i = 1; i < 10; i++) {
-            if (board[i] == '#') {
-                board[i] = 'O';
-                int score = minimax(depth + 1, true);
-                board[i] = '#';
-
-                if (score < bestScore) {
-                    bestScore = score;
-                }
-            }
-        }
-        return bestScore;
     }
 }
 
@@ -149,178 +100,29 @@ int main() {
 
     float textTimer = 1.7f, winnerLineTimer = 0.3f;
     while (!WindowShouldClose()) {
-        if (option == 2) {
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 && GetMouseY() < height / 3 && board[1] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[1] = 'X';
-                } else {
-                    board[1] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 * 2 + 10 && GetMouseX() > width / 3 + 20 && GetMouseY() < height / 3 && board[2] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[2] = 'X';
-                } else {
-                    board[2] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 * 2 + 20 && GetMouseY() < height / 3 && board[3] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[3] = 'X';
-                } else {
-                    board[3] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[4] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[4] = 'X';
-                } else {
-                    board[4] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[5] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[5] = 'X';
-                } else {
-                    board[5] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[6] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[6] = 'X';
-                } else {
-                    board[6] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 && GetMouseY() > height / 3 * 2 && board[7] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[7] = 'X';
-                } else {
-                    board[7] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[8] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[8] = 'X';
-                } else {
-                    board[8] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[9] == '#' && game_on) {
-                if (current_player == 'X') {
-                    board[9] = 'X';
-                } else {
-                    board[9] = 'O';
-                }
-                checkWin();
-                switchPlayer();
-            }
-        } else {
-            // * Preplace the computer's moves
+        if (option == 2 && game_on) {
+            // Parcurgem matricea de joc 3x3
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    // Calculăm coordonatele pentru fiecare pătrat
+                    float x_min = j * (width / 3);
+                    float x_max = (j + 1) * (width / 3);
+                    float y_min = i * (height / 3);
+                    float y_max = (i + 1) * (height / 3);
 
-            if (current_player == 'X') {
-                findBestMove();
-                board[bestMove] = 'X';
-                checkWin();
-                switchPlayer();
-            } else {
+                    // Verificăm dacă mouse-ul este apăsat în interiorul pătratului curent și că pătratul este liber ('#')
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+                        GetMouseX() > x_min && GetMouseX() < x_max &&
+                        GetMouseY() > y_min && GetMouseY() < y_max &&
+                        board[i][j] == '#') {
 
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 && GetMouseY() < height / 3 && board[1] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[1] = 'X';
-                    } else {
-                        board[1] = 'O';
+                        // Actualizăm tabla cu simbolul jucătorului curent
+                        board[i][j] = (current_player == 'X') ? 'X' : 'O';
+
+                        // Verificăm dacă cineva a câștigat și schimbăm jucătorul
+                        checkWin();
+                        switchPlayer();
                     }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 * 2 + 10 && GetMouseX() > width / 3 + 20 && GetMouseY() < height / 3 && board[2] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[2] = 'X';
-                    } else {
-                        board[2] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 * 2 + 20 && GetMouseY() < height / 3 && board[3] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[3] = 'X';
-                    } else {
-                        board[3] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[4] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[4] = 'X';
-                    } else {
-                        board[4] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[5] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[5] = 'X';
-                    } else {
-                        board[5] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[6] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[6] = 'X';
-                    } else {
-                        board[6] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() < width / 3 && GetMouseY() > height / 3 * 2 && board[7] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[7] = 'X';
-                    } else {
-                        board[7] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[8] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[8] = 'X';
-                    } else {
-                        board[8] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
-                }
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[9] == '#' && game_on) {
-                    if (current_player == 'X') {
-                        board[9] = 'X';
-                    } else {
-                        board[9] = 'O';
-                    }
-                    checkWin();
-                    switchPlayer();
                 }
             }
         }
@@ -395,129 +197,67 @@ int main() {
             }
             // ! Grid drawing
 
-            // ! Vertical lines
-            DrawLineEx((Vector2){width / 3, 10}, (Vector2){width / 3, 590}, gridLineThickness, BLACK);
-            DrawLineEx((Vector2){width / 3 * 2, 10}, (Vector2){width / 3 * 2, 590}, gridLineThickness, BLACK);
-
-            // ! Horizontal Lines
-
-            DrawLineEx((Vector2){10, height / 3}, (Vector2){790, height / 3}, gridLineThickness, BLACK);
-            DrawLineEx((Vector2){10, height / 3 * 2}, (Vector2){790, height / 3 * 2}, gridLineThickness, BLACK);
-
-            // ! Hover on square and Draw X and O for each square
-            // * Top left Square (sq1)
-            if (GetMouseX() < width / 3 && GetMouseY() < height / 3 && board[1] == '#' && game_on == true) {
-                DrawRectangle(10, 10, width / 3 - 24, height / 3 - 25, LIGHTGRAY); // Draw a color-filled rectangle
+            // Desenăm liniile grilei
+            for (int i = 1; i < 3; i++) {
+                // Linii verticale
+                DrawLineEx((Vector2){i * width / 3, 10}, (Vector2){i * width / 3, height - 10}, gridLineThickness, BLACK);
+                // Linii orizontale
+                DrawLineEx((Vector2){10, i * height / 3}, (Vector2){width - 10, i * height / 3}, gridLineThickness, BLACK);
             }
 
-            if (board[1] == 'X') {
-                DrawTexture(xTexture, 50, 10, RED);
-            } else if (board[1] == 'O') {
-                DrawTexture(oTexture, 50, 10, RED);
-            }
+            // Desenăm pătratele și texturile
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    // Calculăm coordonatele pătratului
+                    float x_min = j * (width / 3);
+                    float x_max = (j + 1) * (width / 3);
+                    float y_min = i * (height / 3);
+                    float y_max = (i + 1) * (height / 3);
 
-            // * Top middle Square(sq2)
-            if (GetMouseX() < width / 3 * 2 + 10 && GetMouseX() > width / 3 + 20 && GetMouseY() < height / 3 && board[2] == '#' && game_on == true) {
-                DrawRectangle(width / 3 + 16, 10, 236, 175, LIGHTGRAY);
-            }
-            if (board[2] == 'X') {
-                DrawTexture(xTexture, width / 2 - 85, 10, RED);
-            } else if (board[2] == 'O') {
-                DrawTexture(oTexture, width / 2 - 85, 10, RED);
-            }
+                    // Verificăm dacă mouse-ul este deasupra pătratului curent
+                    if (GetMouseX() > x_min && GetMouseX() < x_max && GetMouseY() > y_min && GetMouseY() < y_max) {
+                        if (board[i][j] == '#') {
+                            DrawRectangle(x_min + 10, y_min + 10, (width / 3) - 20, (height / 3) - 20, LIGHTGRAY); // Desenăm pătratul gri
+                        }
+                    }
 
-            // * Top right Square (sq3)
-            if (GetMouseX() > width / 3 * 2 + 20 && GetMouseY() < height / 3 && board[3] == '#' && game_on == true) {
-                DrawRectangle(width / 3 * 2 + 15, 10, 242, 175, LIGHTGRAY);
-            }
-
-            if (board[3] == 'X') {
-                DrawTexture(xTexture, width - 220, 10, RED);
-            } else if (board[3] == 'O') {
-                DrawTexture(oTexture, width - 220, 10, RED);
-            }
-
-            // * Middle left Square(sq4)
-            if (GetMouseX() < width / 3 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[4] == '#' && game_on == true) {
-                DrawRectangle(10, height / 3 + 15, width / 3 - 24, height / 3 - 30, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[4] == 'X') {
-                DrawTexture(xTexture, 50, height / 2 - 85, RED);
-            } else if (board[4] == 'O') {
-                DrawTexture(oTexture, 50, height / 2 - 85, RED);
-            }
-
-            // * Middle center Square(sq5)
-            if (GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[5] == '#' && game_on == true) {
-                DrawRectangle(width / 3 + 16, height / 2 - 85, 236, 170, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[5] == 'X') {
-                DrawTexture(xTexture, width / 2 - 85, height / 2 - 85, RED);
-            } else if (board[5] == 'O') {
-                DrawTexture(oTexture, width / 2 - 85, height / 2 - 85, RED);
-            }
-            // * Right middle Square(sq6)
-            if (GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[6] == '#' && game_on == true) {
-                DrawRectangle(width / 3 * 2 + 15, height / 2 - 85, 240, 170, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[6] == 'X') {
-                DrawTexture(xTexture, width - 220, height / 2 - 85, RED);
-            } else if (board[6] == 'O') {
-                DrawTexture(oTexture, width - 220, height / 2 - 85, RED);
-            }
-            // * Left bottom Square(sq7)
-            if (GetMouseX() < width / 3 && GetMouseY() > height / 3 * 2 && board[7] == '#' && game_on == true) {
-                DrawRectangle(10, height - 185, 242, 175, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[7] == 'X') {
-                DrawTexture(xTexture, 50, height - 175, RED);
-            } else if (board[7] == 'O') {
-                DrawTexture(oTexture, 50, height - 175, RED);
-            }
-            // * Middle bottom Square(sq8)
-            if (GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[8] == '#' && game_on == true) {
-                DrawRectangle(width / 3 + 16, height - 185, 236, 175, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[8] == 'X') {
-                DrawTexture(xTexture, width / 2 - 85, height - 175, RED);
-            } else if (board[8] == 'O') {
-                DrawTexture(oTexture, width / 2 - 85, height - 175, RED);
-            }
-            // * Right bottom Square(sq9)
-            if (GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[9] == '#' && game_on == true) {
-                DrawRectangle(width / 3 * 2 + 15, height - 185, 242, 175, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[9] == 'X') {
-                DrawTexture(xTexture, width - 220, height - 175, RED);
-            } else if (board[9] == 'O') {
-                DrawTexture(oTexture, width - 220, height - 175, RED);
+                    // Desenăm X și O
+                    if (board[i][j] == 'X') {
+                        DrawTexture(xTexture, x_min + (width / 6) - (xTexture.width / 2), y_min + (height / 6) - (xTexture.height / 2), RED);
+                    } else if (board[i][j] == 'O') {
+                        DrawTexture(oTexture, x_min + (width / 6) - (oTexture.width / 2), y_min + (height / 6) - (oTexture.height / 2), RED);
+                    }
+                }
             }
 
             // ! Display green line if someone wins
             if (!game_on && showWinnerLine) {
-                if (board[1] == board[2] && board[2] == board[3] && board[1] != '#')
+                // Horizontal lines
+                if (board[0][0] == board[0][1] && board[0][1] == board[0][2] && board[0][0] != '#') {
                     DrawLineEx((Vector2){17, height / 3 / 2}, (Vector2){780, height / 3 / 2}, winnerLineThickness, GREEN);
-                else if (board[4] == board[5] && board[5] == board[6] && board[4] != '#')
+                } else if (board[1][0] == board[1][1] && board[1][1] == board[1][2] && board[1][0] != '#') {
                     DrawLineEx((Vector2){17, height / 2}, (Vector2){780, height / 2}, winnerLineThickness, GREEN);
-                else if (board[7] == board[8] && board[8] == board[9] && board[7] != '#')
+                } else if (board[2][0] == board[2][1] && board[2][1] == board[2][2] && board[2][0] != '#') {
                     DrawLineEx((Vector2){17, height - 90}, (Vector2){780, height - 90}, winnerLineThickness, GREEN);
-                else if (board[1] == board[4] && board[4] == board[7] && board[1] != '#')
+                }
+                // Vertical lines
+                else if (board[0][0] == board[1][0] && board[1][0] == board[2][0] && board[0][0] != '#') {
                     DrawLineEx((Vector2){width / 3 / 2, 10}, (Vector2){width / 3 / 2, height - 10}, winnerLineThickness, GREEN);
-                else if (board[2] == board[5] && board[5] == board[8] && board[2] != '#')
-                    DrawLineEx((Vector2){width / 2, 10}, (Vector2){width / 2, 780}, winnerLineThickness, GREEN);
-                else if (board[3] == board[6] && board[6] == board[9] && board[3] != '#')
+                } else if (board[0][1] == board[1][1] && board[1][1] == board[2][1] && board[0][1] != '#') {
+                    DrawLineEx((Vector2){width / 2, 10}, (Vector2){width / 2, height - 10}, winnerLineThickness, GREEN);
+                } else if (board[0][2] == board[1][2] && board[1][2] == board[2][2] && board[0][2] != '#') {
                     DrawLineEx((Vector2){width / 3 * 2 + 135, 10}, (Vector2){width / 3 * 2 + 135, height - 10}, winnerLineThickness, GREEN);
-
-                // * Special displays if player wins on the diagonals, depending on the winner's marker
-
-                else if (board[1] == board[5] && board[5] == board[9] && board[1] == 'O')
-                    DrawLineEx((Vector2){20, 10}, (Vector2){790, height - 10}, winnerLineThickness, GREEN);
-                else if (board[3] == board[5] && board[5] == board[7] && board[3] == 'O')
-                    DrawLineEx((Vector2){width - 20, 10}, (Vector2){10, height - 10}, winnerLineThickness, GREEN);
-                else if (board[1] == board[5] && board[5] == board[9] && board[1] == 'X')
-                    DrawLineEx((Vector2){73, 25}, (Vector2){width - 45, height - 10}, winnerLineThickness, GREEN);
-                else if (board[3] == board[5] && board[5] == board[7] && board[3] == 'X')
-                    DrawLineEx((Vector2){width - 65, 25}, (Vector2){55, height - 15}, winnerLineThickness, GREEN);
+                }
+                // Diagonal lines
+                else if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[0][0] != '#') {
+                    Vector2 start = (board[0][0] == 'O') ? (Vector2){20, 10} : (Vector2){73, 25};
+                    Vector2 end = (board[0][0] == 'O') ? (Vector2){790, height - 10} : (Vector2){width - 45, height - 10};
+                    DrawLineEx(start, end, winnerLineThickness, GREEN);
+                } else if (board[0][2] == board[1][1] && board[1][1] == board[2][0] && board[0][2] != '#') {
+                    Vector2 start = (board[0][2] == 'O') ? (Vector2){width - 20, 10} : (Vector2){width - 65, 25};
+                    Vector2 end = (board[0][2] == 'O') ? (Vector2){10, height - 10} : (Vector2){55, height - 15};
+                    DrawLineEx(start, end, winnerLineThickness, GREEN);
+                }
             }
 
             // ! Display game_over text and button
@@ -605,167 +345,7 @@ int main() {
                 clearBoard();
             }
         }
-        // TODO AI pt hard mode -> minimax alg
-        if (hard) {
-            ClearBackground(RAYWHITE);
-            // ! Grid drawing
 
-            // ! Vertical lines
-            DrawLineEx((Vector2){width / 3, 10}, (Vector2){width / 3, 590}, gridLineThickness, BLACK);
-            DrawLineEx((Vector2){width / 3 * 2, 10}, (Vector2){width / 3 * 2, 590}, gridLineThickness, BLACK);
-
-            // ! Horizontal Lines
-
-            DrawLineEx((Vector2){10, height / 3}, (Vector2){790, height / 3}, gridLineThickness, BLACK);
-            DrawLineEx((Vector2){10, height / 3 * 2}, (Vector2){790, height / 3 * 2}, gridLineThickness, BLACK);
-
-            // ! Hover on square and Draw X and O for each square
-            // * Top left Square (sq1)
-            if (GetMouseX() < width / 3 && GetMouseY() < height / 3 && board[1] == '#' && game_on == true) {
-                DrawRectangle(10, 10, width / 3 - 24, height / 3 - 25, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-
-            if (board[1] == 'X') {
-                DrawTexture(xTexture, 50, 10, RED);
-            } else if (board[1] == 'O') {
-                DrawTexture(oTexture, 50, 10, RED);
-            }
-
-            // * Top middle Square(sq2)
-            if (GetMouseX() < width / 3 * 2 + 10 && GetMouseX() > width / 3 + 20 && GetMouseY() < height / 3 && board[2] == '#' && game_on == true) {
-                DrawRectangle(width / 3 + 16, 10, 236, 175, LIGHTGRAY);
-            }
-            if (board[2] == 'X') {
-                DrawTexture(xTexture, width / 2 - 85, 10, RED);
-            } else if (board[2] == 'O') {
-                DrawTexture(oTexture, width / 2 - 85, 10, RED);
-            }
-
-            // * Top right Square (sq3)
-            if (GetMouseX() > width / 3 * 2 + 20 && GetMouseY() < height / 3 && board[3] == '#' && game_on == true) {
-                DrawRectangle(width / 3 * 2 + 15, 10, 242, 175, LIGHTGRAY);
-            }
-
-            if (board[3] == 'X') {
-                DrawTexture(xTexture, width - 220, 10, RED);
-            } else if (board[3] == 'O') {
-                DrawTexture(oTexture, width - 220, 10, RED);
-            }
-
-            // * Middle left Square(sq4)
-            if (GetMouseX() < width / 3 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[4] == '#' && game_on == true) {
-                DrawRectangle(10, height / 3 + 15, width / 3 - 24, height / 3 - 30, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[4] == 'X') {
-                DrawTexture(xTexture, 50, height / 2 - 85, RED);
-            } else if (board[4] == 'O') {
-                DrawTexture(oTexture, 50, height / 2 - 85, RED);
-            }
-
-            // * Middle center Square(sq5)
-            if (GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[5] == '#' && game_on == true) {
-                DrawRectangle(width / 3 + 16, height / 2 - 85, 236, 170, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[5] == 'X') {
-                DrawTexture(xTexture, width / 2 - 85, height / 2 - 85, RED);
-            } else if (board[5] == 'O') {
-                DrawTexture(oTexture, width / 2 - 85, height / 2 - 85, RED);
-            }
-            // * Right middle Square(sq6)
-            if (GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 && GetMouseY() < height / 3 * 2 && board[6] == '#' && game_on == true) {
-                DrawRectangle(width / 3 * 2 + 15, height / 2 - 85, 240, 170, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[6] == 'X') {
-                DrawTexture(xTexture, width - 220, height / 2 - 85, RED);
-            } else if (board[6] == 'O') {
-                DrawTexture(oTexture, width - 220, height / 2 - 85, RED);
-            }
-            // * Left bottom Square(sq7)
-            if (GetMouseX() < width / 3 && GetMouseY() > height / 3 * 2 && board[7] == '#' && game_on == true) {
-                DrawRectangle(10, height - 185, 242, 175, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[7] == 'X') {
-                DrawTexture(xTexture, 50, height - 175, RED);
-            } else if (board[7] == 'O') {
-                DrawTexture(oTexture, 50, height - 175, RED);
-            }
-            // * Middle bottom Square(sq8)
-            if (GetMouseX() > width / 3 && GetMouseX() < width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[8] == '#' && game_on == true) {
-                DrawRectangle(width / 3 + 16, height - 185, 236, 175, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[8] == 'X') {
-                DrawTexture(xTexture, width / 2 - 85, height - 175, RED);
-            } else if (board[8] == 'O') {
-                DrawTexture(oTexture, width / 2 - 85, height - 175, RED);
-            }
-            // * Right bottom Square(sq9)
-            if (GetMouseX() > width / 3 * 2 && GetMouseY() > height / 3 * 2 && board[9] == '#' && game_on == true) {
-                DrawRectangle(width / 3 * 2 + 15, height - 185, 242, 175, LIGHTGRAY); // Draw a color-filled rectangle
-            }
-            if (board[9] == 'X') {
-                DrawTexture(xTexture, width - 220, height - 175, RED);
-            } else if (board[9] == 'O') {
-                DrawTexture(oTexture, width - 220, height - 175, RED);
-            }
-
-            // ! Display green line if someone wins
-            if (!game_on && showWinnerLine) {
-                if (board[1] == board[2] && board[2] == board[3] && board[1] != '#')
-                    DrawLineEx((Vector2){17, height / 3 / 2}, (Vector2){780, height / 3 / 2}, winnerLineThickness, GREEN);
-                else if (board[4] == board[5] && board[5] == board[6] && board[4] != '#')
-                    DrawLineEx((Vector2){17, height / 2}, (Vector2){780, height / 2}, winnerLineThickness, GREEN);
-                else if (board[7] == board[8] && board[8] == board[9] && board[7] != '#')
-                    DrawLineEx((Vector2){17, height - 90}, (Vector2){780, height - 90}, winnerLineThickness, GREEN);
-                else if (board[1] == board[4] && board[4] == board[7] && board[1] != '#')
-                    DrawLineEx((Vector2){width / 3 / 2, 10}, (Vector2){width / 3 / 2, height - 10}, winnerLineThickness, GREEN);
-                else if (board[2] == board[5] && board[5] == board[8] && board[2] != '#')
-                    DrawLineEx((Vector2){width / 2, 10}, (Vector2){width / 2, 780}, winnerLineThickness, GREEN);
-                else if (board[3] == board[6] && board[6] == board[9] && board[3] != '#')
-                    DrawLineEx((Vector2){width / 3 * 2 + 135, 10}, (Vector2){width / 3 * 2 + 135, height - 10}, winnerLineThickness, GREEN);
-
-                // * Special displays if player wins on the diagonals, depending on the winner's marker
-
-                else if (board[1] == board[5] && board[5] == board[9] && board[1] == 'O')
-                    DrawLineEx((Vector2){20, 10}, (Vector2){790, height - 10}, winnerLineThickness, GREEN);
-                else if (board[3] == board[5] && board[5] == board[7] && board[3] == 'O')
-                    DrawLineEx((Vector2){width - 20, 10}, (Vector2){10, height - 10}, winnerLineThickness, GREEN);
-                else if (board[1] == board[5] && board[5] == board[9] && board[1] == 'X')
-                    DrawLineEx((Vector2){73, 25}, (Vector2){width - 45, height - 10}, winnerLineThickness, GREEN);
-                else if (board[3] == board[5] && board[5] == board[7] && board[3] == 'X')
-                    DrawLineEx((Vector2){width - 65, 25}, (Vector2){55, height - 15}, winnerLineThickness, GREEN);
-            }
-
-            // ! Display game_over text and button
-            if (showGameOver) {
-                DrawRectangle(0, height / 3 - 10, width, 220, LIGHTGRAY);
-                if (!draw)
-                    DrawTextEx(gameOverFont, winner, (Vector2){150, height / 2 - 20}, 55, 1, BLACK);
-                else
-                    DrawTextEx(gameOverFont, winner, (Vector2){220, height / 2 - 20}, 55, 1, BLACK);
-
-                // * Draw New Game Button
-                DrawRectangle(width / 2 - 75, height / 2 + 50, 150, 30, GRAY);
-                DrawTextEx(buttonFont, "New Game", (Vector2){width / 2 - 62.5, height / 2 + 50}, 30, 1, BLACK);
-
-                if (GetMouseX() >= width / 2 - 75 && GetMouseX() <= width / 2 - 75 + 150 && GetMouseY() >= height / 2 + 50 && GetMouseY() <= height / 2 + 80) {
-                    SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-                    DrawTextEx(buttonFont, "New Game", (Vector2){width / 2 - 62.5, height / 2 + 50}, 30, 1, RAYWHITE);
-                } else
-                    SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-
-                // * Draw Score
-                DrawTextEx(buttonFont, TextFormat("Player 1 %i - ", xScore), (Vector2){width / 2 - 125, height / 2 - 70}, 30, 1, RED);
-                DrawTextEx(buttonFont, TextFormat("%i Player 2", oScore), (Vector2){width / 2 + 10, height / 2 - 70}, 30, 1, RED);
-
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && GetMouseX() >= width / 2 - 75 && GetMouseX() <= width / 2 - 75 + 150 && GetMouseY() >= height / 2 + 50 && GetMouseY() <= height / 2 + 80 && !game_on) {
-                    game_on = true, draw = false;
-                    showGameOver = false, showWinnerLine = false;
-                    textTimer = 1.7f, winnerLineTimer = 0.3f;
-                    SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-                    clearBoard();
-                }
-            }
-        }
         EndDrawing();
     }
     UnloadFont(menuButtonFont), UnloadFont(menuFont), UnloadFont(menuCopyrightFont), UnloadFont(gameOverFont), UnloadFont(buttonFont);
