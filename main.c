@@ -14,10 +14,7 @@ bool draw = false;
 char current_player = 'X';
 
 void switchPlayer() {
-    if (current_player == 'X')
-        current_player = 'O';
-    else
-        current_player = 'X';
+    current_player = ((current_player == 'X') ? 'O' : 'X');
 }
 
 int xScore = 0, oScore = 0;
@@ -93,6 +90,10 @@ int main() {
     Font gameOverFont = LoadFontEx("./resources/AovelSansRounded-rdDL.ttf", 55, 0, 0);
     Font buttonFont = LoadFontEx("./resources/AovelSansRounded-rdDL.ttf", 30, 0, 0); // * button and score share the same font
 
+    Rectangle playVsComp = {20, 230, 360, 80};
+    Rectangle playVsFriend = {20, 340, 360, 80};
+    Rectangle exitRect = {20, 450, 360, 80};
+
     const float width = GetScreenWidth(), height = GetScreenHeight(), gridLineThickness = 30;
     const float winnerLineThickness = 11;
     const char *winner = "";
@@ -100,20 +101,18 @@ int main() {
 
     float textTimer = 1.7f, winnerLineTimer = 0.3f;
     while (!WindowShouldClose()) {
+
         if (option == 2 && game_on) {
-            // Parcurgem matricea de joc 3x3
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    // Calculăm coordonatele pentru fiecare pătrat
+                    // coords for each square
                     float x_min = j * (width / 3);
                     float x_max = (j + 1) * (width / 3);
                     float y_min = i * (height / 3);
                     float y_max = (i + 1) * (height / 3);
-
+                    Rectangle square = {x_min, y_min, (x_max - x_min), (y_max - y_min)};
                     // Verificăm dacă mouse-ul este apăsat în interiorul pătratului curent și că pătratul este liber ('#')
-                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-                        GetMouseX() > x_min && GetMouseX() < x_max &&
-                        GetMouseY() > y_min && GetMouseY() < y_max &&
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), square) &&
                         board[i][j] == '#') {
 
                         // Actualizăm tabla cu simbolul jucătorului curent
@@ -129,7 +128,7 @@ int main() {
 
         if (!game_on && !menu) {
             if (!draw) {
-                /* Since after each marker is placed the player is switched, if the last marker was placed by player 1(X) and player 1
+                /*  Since after each marker is placed the player is switched, if the last marker was placed by player 1(X) and player 1
                 wins the game, the current_player will be switched to Player 2 automatically so we need to check the opposite way  */
                 winner = (current_player == 'X' ? "Game Over. Player 2 Wins" : "Game Over. Player 1 Wins");
 
@@ -148,46 +147,63 @@ int main() {
 
         if (menu) {
             ClearBackground(RAYWHITE);
-            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+            bool hovering = false; // Track if mouse is hovering over any button
+
             DrawTextEx(menuFont, "Welcome to", (Vector2){160, 20}, 100, 10, BLACK);
             DrawTextEx(gameOverFont, "TIC TAC TOE", (Vector2){250, 110}, 55, 6, BLACK);
             DrawRectangle(0, 180, width, 5, BLACK);
 
-            DrawRectangle(20, 230, 360, 80, LIGHTGRAY);
+            // Play vs Computer button
+            DrawRectangleRec(playVsComp, LIGHTGRAY);
             DrawTextEx(menuButtonFont, "Play vs Computer", (Vector2){30, 245}, 50, 2, BLACK);
-            if (GetMouseX() >= 20 && GetMouseX() <= 380 && GetMouseY() >= 230 && GetMouseY() <= 310) {
+            if (CheckCollisionPointRec(GetMousePosition(), playVsComp)) {
                 DrawRectangle(20, 230, 360, 80, GRAY);
                 DrawTextEx(menuButtonFont, "Play vs Computer", (Vector2){30, 245}, 50, 2, WHITE);
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+                hovering = true; // Set the flag when hovering over this button
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    menu = false, option = 1;
+                    menu = false;
+                    option = 1;
                 }
             }
 
-            DrawRectangle(20, 340, 360, 80, LIGHTGRAY);
+            // Play vs Friend button
+            DrawRectangleRec(playVsFriend, LIGHTGRAY);
             DrawTextEx(menuButtonFont, "Play vs Friend", (Vector2){65, 355}, 50, 2, BLACK);
-            if (GetMouseX() >= 20 && GetMouseX() <= 380 && GetMouseY() >= 340 && GetMouseY() <= 420) {
+            if (CheckCollisionPointRec(GetMousePosition(), playVsFriend)) {
                 DrawRectangle(20, 340, 360, 80, GRAY);
                 DrawTextEx(menuButtonFont, "Play vs Friend", (Vector2){65, 355}, 50, 2, WHITE);
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+                hovering = true; // Set the flag when hovering over this button
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    menu = false, game_on = true, option = 2;
+                    menu = false;
+                    game_on = true;
+                    option = 2;
                 }
             }
 
-            DrawRectangle(20, 450, 360, 80, LIGHTGRAY);
+            // Exit Game button
+            DrawRectangleRec(exitRect, LIGHTGRAY);
             DrawTextEx(menuButtonFont, "Exit Game", (Vector2){115, 465}, 50, 2, BLACK);
-            if (GetMouseX() >= 20 && GetMouseX() <= 380 && GetMouseY() >= 450 && GetMouseY() <= 530) {
+            if (CheckCollisionPointRec(GetMousePosition(), exitRect)) {
                 DrawRectangle(20, 450, 360, 80, GRAY);
                 DrawTextEx(menuButtonFont, "Exit Game", (Vector2){115, 465}, 50, 2, WHITE);
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+                hovering = true; // Set the flag when hovering over this button
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    CloseWindow();
+                    break;
                 }
             }
 
+            // If not hovering over any button, set cursor back to default
+            if (!hovering) {
+                SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+            }
+
+            // Copyright text
             DrawTextEx(menuCopyrightFont, "Developed by Patrik Benczik", (Vector2){490, height - 40}, 25, 2, BLACK);
         }
+
         if (!menu && option == 2) {
             ClearBackground(WHITE);
             if (IsKeyPressed(KEY_ESCAPE)) {
@@ -196,31 +212,26 @@ int main() {
                 clearBoard();
             }
             // ! Grid drawing
-
-            // Desenăm liniile grilei
-            for (int i = 1; i < 3; i++) {
-                // Linii verticale
-                DrawLineEx((Vector2){i * width / 3, 10}, (Vector2){i * width / 3, height - 10}, gridLineThickness, BLACK);
-                // Linii orizontale
-                DrawLineEx((Vector2){10, i * height / 3}, (Vector2){width - 10, i * height / 3}, gridLineThickness, BLACK);
-            }
-
+            bool hovering = false;
             // Desenăm pătratele și texturile
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     // Calculăm coordonatele pătratului
                     float x_min = j * (width / 3);
-                    float x_max = (j + 1) * (width / 3);
                     float y_min = i * (height / 3);
-                    float y_max = (i + 1) * (height / 3);
-
+                    Rectangle hoverRect = {x_min + 10, y_min + 10, (width / 3) - 20, (height / 3) - 20};
                     // Verificăm dacă mouse-ul este deasupra pătratului curent
-                    if (GetMouseX() > x_min && GetMouseX() < x_max && GetMouseY() > y_min && GetMouseY() < y_max) {
-                        if (board[i][j] == '#') {
-                            DrawRectangle(x_min + 10, y_min + 10, (width / 3) - 20, (height / 3) - 20, LIGHTGRAY); // Desenăm pătratul gri
-                        }
+                    if (CheckCollisionPointRec(GetMousePosition(), hoverRect) && board[i][j] == '#' && game_on) {
+                        hovering = true;
+                        DrawRectangleRec(hoverRect, LIGHTGRAY); // Desenăm pătratul gri
                     }
-
+                    // Desenăm liniile grilei
+                    for (int i = 1; i < 3; i++) {
+                        // Linii verticale
+                        DrawLineEx((Vector2){i * width / 3, 10}, (Vector2){i * width / 3, height - 10}, gridLineThickness, BLACK);
+                        // Linii orizontale
+                        DrawLineEx((Vector2){10, i * height / 3}, (Vector2){width - 10, i * height / 3}, gridLineThickness, BLACK);
+                    }
                     // Desenăm X și O
                     if (board[i][j] == 'X') {
                         DrawTexture(xTexture, x_min + (width / 6) - (xTexture.width / 2), y_min + (height / 6) - (xTexture.height / 2), RED);
@@ -229,7 +240,11 @@ int main() {
                     }
                 }
             }
-
+            if (hovering) {
+                SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+            } else {
+                SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+            }
             // ! Display green line if someone wins
             if (!game_on && showWinnerLine) {
                 // Horizontal lines
@@ -269,15 +284,15 @@ int main() {
                     DrawTextEx(gameOverFont, winner, (Vector2){220, height / 2 - 20}, 55, 1, BLACK);
 
                 // * Draw New Game Button
-                DrawRectangle(width / 2 - 75, height / 2 + 50, 150, 30, GRAY);
+                Rectangle newGameRect = {width / 2 - 75, height / 2 + 50, 150, 30};
+                DrawRectangleRec(newGameRect, GRAY);
                 DrawTextEx(buttonFont, "New Game", (Vector2){width / 2 - 62.5, height / 2 + 50}, 30, 1, BLACK);
 
-                if (GetMouseX() >= width / 2 - 75 && GetMouseX() <= width / 2 - 75 + 150 && GetMouseY() >= height / 2 + 50 && GetMouseY() <= height / 2 + 80) {
-                    SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+                if (CheckCollisionPointRec(GetMousePosition(), newGameRect)) {
+                    hovering = true;
                     DrawTextEx(buttonFont, "New Game", (Vector2){width / 2 - 62.5, height / 2 + 50}, 30, 1, RAYWHITE);
                 } else
-                    SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-
+                    hovering = false;
                 // * Draw Score
                 DrawTextEx(buttonFont, TextFormat("Player 1 %i - ", xScore), (Vector2){width / 2 - 125, height / 2 - 70}, 30, 1, RED);
                 DrawTextEx(buttonFont, TextFormat("%i Player 2", oScore), (Vector2){width / 2 + 10, height / 2 - 70}, 30, 1, RED);
@@ -331,11 +346,7 @@ int main() {
                     DrawTextEx(menuButtonFont, "Hard", (Vector2){140, 505}, 50, 2, WHITE);
                     SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
                     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                        game_on = true, hard = true, difficultyMenu = false, option = 0, draw = false;
-                        showGameOver = false, showWinnerLine = false;
-                        textTimer = 1.7f, winnerLineTimer = 0.3f;
-                        SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-                        clearBoard();
+                        game_on = true;
                     }
                 }
             }
